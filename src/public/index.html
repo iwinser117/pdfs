@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convertidor HTML a PDF test</title>
+    <style>
+        /* ... existing styles ... */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.2em;
+        }
+        .loading.active {
+            display: flex;
+        }
+        .error {
+            color: red;
+            margin: 10px 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Convertidor HTML a PDF test</h1>
+        <button onclick="window.location.href='/demo'" class="btn btn-secondary">Ver Demo PDF</button>
+        <div class="input-section">
+            <h2>Pegar HTML</h2>
+            <textarea id="htmlInput" placeholder="Pega tu código HTML aquí"></textarea>
+        </div>
+
+        <div class="input-section">
+            <h2>O cargar archivo HTML</h2>
+            <input type="file" id="htmlFile" accept=".html,.htm">
+        </div>
+
+        <div class="input-section">
+            <h2>Encabezado (opcional)</h2>
+            <textarea id="headerInput" placeholder="HTML para el encabezado"></textarea>
+        </div>
+
+        <div class="input-section">
+            <h2>Pie de página (opcional)</h2>
+            <textarea id="footerInput" placeholder="HTML para el pie de página"></textarea>
+        </div>
+
+        <button onclick="convertToPDF()">Convertir a PDF</button>
+        <div id="error" class="error"></div>
+    </div>
+
+    <div id="loading" class="loading">
+        Generando PDF, por favor espere...
+    </div>
+
+    <script>
+        async function convertToPDF() {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            error.style.display = 'none';
+            loading.classList.add('active');
+
+            try {
+                const htmlInput = document.getElementById('htmlInput');
+                const htmlFile = document.getElementById('htmlFile');
+                const headerInput = document.getElementById('headerInput');
+                const footerInput = document.getElementById('footerInput');
+
+                let formData;
+                let url;
+
+                if (htmlFile.files.length > 0) {
+                    // Usar archivo
+                    formData = new FormData();
+                    formData.append('htmlFile', htmlFile.files[0]);
+                    formData.append('header', headerInput.value);
+                    formData.append('footer', footerInput.value);
+                    url = '/convert-file';
+                } else if (htmlInput.value.trim()) {
+                    // Usar texto pegado
+                    formData = JSON.stringify({
+                        html: htmlInput.value,
+                        header: headerInput.value,
+                        footer: footerInput.value
+                    });
+                    url = '/convert';
+                } else {
+                    throw new Error('Por favor, proporciona contenido HTML');
+                }
+
+                const options = {
+                    method: 'POST',
+                    headers: htmlFile.files.length > 0 ? {} : {
+                        'Content-Type': 'application/json'
+                    },
+                    body: formData
+                };
+
+                const response = await fetch(url, options);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText);
+                }
+
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = 'documento.pdf';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(downloadUrl);
+
+            } catch (err) {
+                error.textContent = 'Error: ' + err.message;
+                error.style.display = 'block';
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html> 
