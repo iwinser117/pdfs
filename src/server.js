@@ -5,6 +5,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
+
 const app = express();
 const upload = multer({ dest: "uploads/" });
 
@@ -25,46 +26,42 @@ async function generatePDF(html, header, footer) {
   const options = {
     format: "A4",
     margin: {
-      top: header ? "70px" : "20px", // Reservar espacio si hay header
-      bottom: footer ? "70px" : "20px", // Reservar espacio si hay footer
-      left: "20px",
-      right: "20px",
+      top: header ? "120px" : "20px", // Aumentar un poco el margen superior
+      bottom: footer ? "100px" : "20px", // Aumentar un poco el margen inferior
+      left: "10px",
+      right: "10px",
     },
     displayHeaderFooter: true,
     headerTemplate: header
       ? `
+    <div style="
+      position: relative;
+      font-size: 15px;
+      font-family: Arial, sans-serif;
+      width: 100%;
+      height: 60px; /* Alto del encabezado */
+      box-sizing: border-box;
+      display: flex;
+      justify-content: center;
+      align-items: center; /* Centrar verticalmente */
+      padding: 0;
+      margin: 0;
+      overflow: visible; /* Evitar desbordamiento */
+    ">
       <div style="
-        position: relative;
-        font-size: 15px; 
-        font-family: Arial, sans-serif;
         width: 100%;
-        height: 60px;
-        padding: 5px 20px;
-        box-sizing: border-box;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: visible;
+        transform-origin: top left; /* Origen de la transformación */
       ">
-        <div style="
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          width: calc(100% - 40px);
-          height: 50px;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        ">
-          <div style="
-            max-width: 100%;
-            max-height: 100%;
-            display: flex;
-            align-items: center;
-          ">
-            ${header}
-          </div>
-        </div>
+        ${header}
       </div>
+    </div>
     `
-      : " ",
+      : " ", // Si no hay header, se deja vacío
     footerTemplate: footer
       ? `
       <div style="
@@ -72,40 +69,29 @@ async function generatePDF(html, header, footer) {
         font-size: 15px;
         font-family: Arial, sans-serif;
         width: 100%;
-        height: 60px;
-        padding: 5px 20px;
+        height: 60px; /* Alto del footer, igual que el header */
         box-sizing: border-box;
+        display: flex;
+        justify-content: center;
+        align-items: center; /* Centrar verticalmente */
+        padding: 0;
+        margin: 0;
+        overflow: visible; /* Evitar desbordamiento */
       ">
         <div style="
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          width: calc(100% - 40px);
-          height: 50px;
+          width: 100%;
+          height: 100%;
           display: flex;
           justify-content: center;
           align-items: center;
+          overflow: visible;
+          transform-origin: top left; /* Origen de la transformación */
         ">
-          <div style="
-            max-width: 100%;
-            max-height: 100%;
-            display: flex;
-            align-items: center;
-          ">
-            ${footer}
-          </div>
+          ${footer}
         </div>
-        <script>
-          // Solo mostrar el pie de página si la página tiene contenido
-          const element = document.querySelector('body');
-          if (element && element.innerText.trim() === '') {
-            document.currentScript.parentElement.style.display = 'none';
-          }
-        </script>
       </div>
     `
-      : " ",
+      : " ", // Si no hay footer, se deja vacío
     printBackground: true,
   };
 
@@ -184,7 +170,13 @@ app.get("/", (req, res) => {
 // Ruta mejorada para convertir HTML a PDF
 app.post("/convert", async (req, res) => {
   try {
-    const { html, header, footer } = req.body;
+    const htmlPath = path.join(__dirname, "../../resources/main.html");
+const headerPath = path.join(__dirname, "../../resources/header.html");
+const footerPath = path.join(__dirname, "../../resources/footer.html");
+
+    const html = fs.readFileSync(htmlPath, "utf-8");
+    const header = fs.readFileSync(headerPath, "utf-8");
+    const footer = fs.readFileSync(footerPath, "utf-8")
 
     // Validar que el HTML no esté vacío
     if (!html || html.trim() === "") {
@@ -193,35 +185,7 @@ app.post("/convert", async (req, res) => {
 
     // Agregar estilos base para mejor renderizado
     const styledHtml = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <style>
-                    body {
-                        font-family: Arial, sans-serif;
-                        line-height: 1.6;
-                        margin: 0;
-                        padding: 20px;
-                    }
-                    @page {
-                        size: A4;
-                        margin: 100px 20px;
-                    }
-                    table {
-                        border-collapse: collapse;
-                        width: 100%;
-                    }
-                    td, th {
-                        border: 1px solid #ddd;
-                        padding: 8px;
-                    }
-                </style>
-            </head>
-            <body>
                 ${html}
-            </body>
-            </html>
         `;
 
     const pdf = await generatePDF(styledHtml, header, footer);
