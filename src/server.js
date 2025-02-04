@@ -51,7 +51,7 @@ async function generatePDF(html, header, footer) {
       box-sizing: border-box;
       display: flex;
       justify-content: center;
-      align-items: center; /* Centrar verticalmente */
+      align-items: start; /* Centrar verticalmente */
       padding: 0;
       margin: 0;
       overflow: visible; /* Evitar desbordamiento */
