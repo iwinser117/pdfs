@@ -4,8 +4,6 @@ const bodyParser = require("body-parser");
 const path = require("path");
 const fs = require("fs");
 
-
-
 const app = express();
 
 // Middleware para servir archivos estáticos
@@ -25,8 +23,6 @@ app.use((req, res, next) => {
 
   next();
 });
-
-// Para manejar datos de formulario
 
 // Ruta para la página principal
 app.get("/", (req, res) => {
@@ -115,38 +111,17 @@ async function generatePDF(html, header, footer) {
   try {
     const pdfBuffer = await html_to_pdf.generatePdf(file, options);
     const pdfBase64 = pdfBuffer.toString('base64');
-
-    // Enviar el base64 como JSON
-    res.json({
-      status: 'success',
-      data: pdfBase64
-    });
-
+    return pdfBase64; // Devolver el PDF en Base64
   } catch (error) {
     console.error("Error generando PDF:", error);
     throw error;
   }
 }
 
-// Ruta para el demo
-
-
-// Ruta para la página principal
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-// Ruta mejorada para convertir HTML a PDF
+// Ruta para convertir HTML a PDF
 app.post("/convert", async (req, res) => {
   try {
     const { html, header, footer } = req.body;
-    /*  const htmlPath = path.join(__dirname, "../../resources/main.html");
- const headerPath = path.join(__dirname, "../../resources/header.html");
- const footerPath = path.join(__dirname, "../../resources/footer.html");
- 
-     const html = fs.readFileSync(htmlPath, "utf-8");
-     const header = fs.readFileSync(headerPath, "utf-8");
-     const footer = fs.readFileSync(footerPath, "utf-8") */
 
     // Validar que el HTML no esté vacío
     if (!html || html.trim() === "") {
@@ -158,17 +133,19 @@ app.post("/convert", async (req, res) => {
                 ${html}
         `;
 
-    const pdf = await generatePDF(styledHtml, header, footer);
+    const pdfBase64 = await generatePDF(styledHtml, header, footer);
 
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", "attachment; filename=documento.pdf");
-    res.send(pdf);
+    // Enviar el base64 como JSON
+    res.json({
+      status: 'success',
+      data: pdfBase64
+    });
+
   } catch (error) {
     console.error("Error en la conversión:", error);
     res.status(500).send("Error al generar el PDF: " + error.message);
   }
 });
-
 
 // El servidor debe estar escuchando en un puerto
 const PORT = process.env.PORT || 3000;
