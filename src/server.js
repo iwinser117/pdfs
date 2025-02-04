@@ -1,13 +1,11 @@
 const express = require("express");
 const html_to_pdf = require("html-pdf-node");
 const bodyParser = require("body-parser");
-const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
 
 const app = express();
-const upload = multer({ dest: "uploads/" });
 
 // Middleware para servir archivos estáticos
 app.use(express.static(path.join(__dirname, "public")));
@@ -154,5 +152,5 @@ const footerPath = path.join(__dirname, "../../resources/footer.html");
 // El servidor debe estar escuchando en un puerto
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`Servidor corriendo en ${PORT}`);
 });
