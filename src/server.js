@@ -5,12 +5,26 @@ const path = require("path");
 const fs = require("fs");
 
 
+
 const app = express();
 
 // Middleware para servir archivos estáticos
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+
+  // Manejar las solicitudes OPTIONS pre-flight
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
 
 // Para manejar datos de formulario
 
@@ -100,6 +114,8 @@ async function generatePDF(html, header, footer) {
 
   try {
     const pdfBuffer = await html_to_pdf.generatePdf(file, options);
+    const pdfBase64 = pdfBuffer.toString('base64');
+    console.log(pdfBase64)
     return pdfBuffer;
   } catch (error) {
     console.error("Error generando PDF:", error);
@@ -119,13 +135,13 @@ app.get("/", (req, res) => {
 app.post("/convert", async (req, res) => {
   try {
     const { html, header, footer } = req.body;
-   /*  const htmlPath = path.join(__dirname, "../../resources/main.html");
-const headerPath = path.join(__dirname, "../../resources/header.html");
-const footerPath = path.join(__dirname, "../../resources/footer.html");
-
-    const html = fs.readFileSync(htmlPath, "utf-8");
-    const header = fs.readFileSync(headerPath, "utf-8");
-    const footer = fs.readFileSync(footerPath, "utf-8") */
+    /*  const htmlPath = path.join(__dirname, "../../resources/main.html");
+ const headerPath = path.join(__dirname, "../../resources/header.html");
+ const footerPath = path.join(__dirname, "../../resources/footer.html");
+ 
+     const html = fs.readFileSync(htmlPath, "utf-8");
+     const header = fs.readFileSync(headerPath, "utf-8");
+     const footer = fs.readFileSync(footerPath, "utf-8") */
 
     // Validar que el HTML no esté vacío
     if (!html || html.trim() === "") {
