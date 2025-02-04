@@ -115,8 +115,13 @@ async function generatePDF(html, header, footer) {
   try {
     const pdfBuffer = await html_to_pdf.generatePdf(file, options);
     const pdfBase64 = pdfBuffer.toString('base64');
-    console.log(pdfBase64)
-    return pdfBuffer;
+
+    // Enviar el base64 como JSON
+    res.json({
+      status: 'success',
+      data: pdfBase64
+    });
+
   } catch (error) {
     console.error("Error generando PDF:", error);
     throw error;
